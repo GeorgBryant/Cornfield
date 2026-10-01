@@ -20,7 +20,7 @@ export default function PlayerController() {
   const rayOrigin = useRef(new THREE.Vector3());
   const down = useRef(new THREE.Vector3(0, -1, 0));
 
-  const speed = 200;
+  const speed = 15;
   const mouseSensitivity = 0.002;
 
   // Distance between the ground and the player's eyes

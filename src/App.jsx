@@ -28,7 +28,7 @@ function getMeshParts(scene) {
 
       parts.push({
         geometry,
-        material: child.material,
+        material: child.material.clone(),
       });
     }
   });
@@ -39,7 +39,13 @@ function getMeshParts(scene) {
     ...parts.map((part) => part.geometry.boundingBox.max.y)
   );
 
-  parts.forEach((part) => applyWindShader(part.material, maxHeight));
+  parts.forEach((part) => {
+    // Matte foliage; retain the imported colour and existing wind effect.
+    if ("roughness" in part.material) part.material.roughness = 1;
+    if ("metalness" in part.material) part.material.metalness = 0;
+    part.material.needsUpdate = true;
+    applyWindShader(part.material, maxHeight);
+  });
 
   return parts;
 }
@@ -77,6 +83,16 @@ function Landscape() {
   const { scene } = useGLTF("/models/Landscape.glb");
   const groupRef = useRef();
   const { camera } = useThree();
+
+  useLayoutEffect(() => {
+    scene.traverse((child) => {
+      if (!child.isMesh) return;
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if ("roughness" in child.material) child.material.roughness = 1;
+      if ("metalness" in child.material) child.material.metalness = 0;
+    });
+  }, [scene]);
 
   // Snap to the camera's starting XZ on mount, before the first paint, so
   // there's no visible jump on the first frame once following begins.
@@ -156,6 +172,7 @@ if (mesh.boundingSphere) {
           ref={(el) => (refs.current[i] = el)}
           args={[part.geometry, part.material, items.length]}
           frustumCulled={false}
+          castShadow
         />
       ))}
     </>
@@ -248,6 +265,9 @@ function Tile({
   grass.traverse((child) => {
     if (child.isMesh) {
       child.frustumCulled = false;
+      child.receiveShadow = true;
+      if ("roughness" in child.material) child.material.roughness = 1;
+      if ("metalness" in child.material) child.material.metalness = 0;
     }
   });
 }, [grass]);
@@ -424,11 +444,24 @@ export default function App() {
         style={{ width: "100vw", height: "100vh" }}
         camera={{ position: [0, 3, 20], fov: 60 }}
         dpr={settings.dpr}
+        shadows
       >
-        <ambientLight intensity={1.5} />
+        <ambientLight color="#ffebd5" intensity={1.3} />
+        <hemisphereLight args={["#ffceae", "#a08b70", 1.15]} />
         <directionalLight
-          position={[10, 20, 10]}
-          intensity={2}
+          color="#ffb76f"
+          position={[-45, 26, 10]}
+          intensity={2.7}
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-85}
+          shadow-camera-right={85}
+          shadow-camera-top={85}
+          shadow-camera-bottom={-85}
+          shadow-camera-near={1}
+          shadow-camera-far={160}
+          shadow-bias={-0.0002}
+          shadow-normalBias={0.035}
         />
 
         <WindDriver />

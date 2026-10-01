@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 export const WindSettings = {
   direction: [1, 0.35],
-  baseStrength: 0.4,
-  speed: 6,
+  baseStrength: 0.2,
+  speed: 2,
   heightExponent: 2,
 };
 
